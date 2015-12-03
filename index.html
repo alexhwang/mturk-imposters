@@ -1,0 +1,106 @@
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+</head>
+<body style="font-family:Helvetica;font-size:12">
+<script>
+
+var final_array = [];
+
+function find_region(ip,iteration) {
+    var final = "hi";
+    $.get('https://freegeoip.net/xml/'+ip, function( data ) {
+        final = $(data).find('RegionCode').text();
+        if (final == "")
+            final = "NO REGION";
+        final_array[iteration]["region"] = final;
+    });
+    
+}
+    
+function gmaps_find_address(lat,lon,iteration) {
+    var final = "hi";
+    $.getJSON('https://maps.googleapis.com/maps/api/geocode/json?latlng='+lat+','+lon+'&key=AIzaSyBgHMjiUNELtXOtiuRgTDGOEOzVkUlwBr8', function(data) {
+        //console.log(iteration);
+        if (data.status == "ZERO_RESULTS") {
+            final = "No GMaps Results";
+        }
+        else {
+            final = "";
+            for (var i=0;i<data.results[0].address_components.length;i++) {
+                if (data.results[0].address_components[i].types[0] == "administrative_area_level_1" && data.results[0].address_components[i].types[1] == "political")
+                    final = data.results[0].address_components[i].short_name;
+            }
+        }
+        final_array[iteration]["gmaps"] = final;
+    }).done(function(d) {
+        console.log("success");
+    })
+
+
+}
+
+function find_all_regions() {
+    document.getElementById("print_button_area").innerHTML = "Waiting...";
+    
+    var input_text = $("#input_box").val().split("\n");
+    var supposed_region = $("#stated_region").val().split("\n");
+    var lat_vals = $("#latitude").val().split("\n");
+    var lon_vals = $("#longitude").val().split("\n");
+    var mturk_vals = $("#mturk_codes").val().split("\n");
+    
+    for (var i=0; i < input_text.length; i++) {
+        final_array[i] = {};
+        final_array[i]["ip"] = input_text[i];
+        find_region(input_text[i],i);
+        final_array[i]["stated"] = supposed_region[i];
+        gmaps_find_address(lat_vals[i],lon_vals[i],i);
+        final_array[i]["mturk"] = mturk_vals[i];
+    }
+    
+    setTimeout(function() {document.getElementById("print_button_area").innerHTML = "<input type='button' onclick='print_data()' style='font-size:30px;' value='PRINT DATA'></input>";}, 3000);
+    
+}
+    
+
+function print_data() {
+        $("#ip_list").html("Ip Addresses:<br>");
+        $("#region_list").html("Regions from IP Addresses:<br>");
+        $("#gmaps_list").html("Address from Google Maps: <br>");
+        $("#supposed_regions").html("Indicated State: <br>");
+        $("#mturk_list").html("mTurk Codes: <br>")
+    
+    for (var i=0; i < final_array.length; i++) {
+        //$("body").append(final_array[i]["ip"]+"  "+final_array[i]["gmaps"]+"  "+final_array[i]["region"]+"  "+final_array[i]+"  "["stated"]+"<br>");
+        $("#ip_list").append("<div style='height:20px;'>"+i+". "+final_array[i]["ip"]+"</div><br>");
+        $("#region_list").append("<div style='height:20px;'>"+final_array[i]["region"]+"</div><br>");
+        $("#gmaps_list").append("<div style='height:20px;'>"+final_array[i]["gmaps"]+"</div><br>");
+        $("#supposed_regions").append("<div style='height:20px;'>"+final_array[i]["stated"]+"</div><br>");
+        $("#mturk_list").append("<div style='height:20px;'>"+final_array[i]["mturk"]+"</div><br>")
+    }
+}
+</script>
+<div style="font-family:Helvetica">
+<h2>mTurk Quick Identity Checking of Indicated State vs. IP and Coordinate Geolocation</h2> 
+Copy and paste entire excel columns into the boxes below as shown, then press "RUN". When the "Print Data" button appears, press it. You may have to press the "PRINT DATA" button more than once if some of the entries in the "Regions from IP Addresses:" column are "undefined".
+<br><br>
+Tool written by Alex Hwang. IP geolocation database from freegeoapi.net, reverse geocoding of lat/lng from Google Maps.    
+</div><br><br>
+<textarea id="input_box" placeholder="IP Addresses"></textarea>
+<textarea id="latitude" placeholder="Latitudes"></textarea>
+<textarea id="longitude" placeholder="Longitudes"></textarea>
+<textarea id="stated_region" placeholder="Indicated States"></textarea>
+<textarea id="mturk_codes" placeholder="MTurk Worker IDs"></textarea>
+<br><br>
+<input type="button" onclick="find_all_regions()" value="RUN" style="font-size:30px;"></input>
+<span id="print_button_area"></span> 
+<br><br>
+<div id="ip_list" style="float:left;margin:20px;">IP Addresses:<br></div>
+<div id="region_list" style="float:left;margin:20px;">Regions from IP Addresses:<br></div>
+<div id="gmaps_list" style="float:left;margin:20px;">Address from Google Maps:<br></div>
+<div id="supposed_regions" style="float:left;margin:20px;">Indicated State:<br></div>
+<div id="mturk_list" style="margin:20px;">mTurk Worker IDs:<br></div>
+
+
+</body>
+</html>

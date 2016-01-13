@@ -54,8 +54,11 @@ function find_all_regions() {
         final_array[i]["ip"] = input_text[i];
         find_region(input_text[i],i);
         final_array[i]["stated"] = supposed_region[i];
+        
+        
         gmaps_find_address(lat_vals[i],lon_vals[i],i);
         final_array[i]["mturk"] = mturk_vals[i];
+        setTimeout(function() {}, 50);
     }
     
     setTimeout(function() {document.getElementById("print_button_area").innerHTML = "<input type='button' onclick='print_data()' style='font-size:30px;' value='PRINT DATA'></input>";}, 3000);
